@@ -28,7 +28,7 @@
     var url, config;
     url = arg$.url, config = arg$.config;
     return function(body, cb){
-      var invoice, ref$, merchant_id, secret, hash, _cmd, get_trans, request;
+      var invoice, MERCHANT_ID, MERCHANT_SECRET, hash, _cmd, get_trans, request;
       if (toString$.call(body).slice(8, -1) !== 'Object') {
         return cb("Expected first argument, type object");
       }
@@ -66,23 +66,32 @@
         return cb("Expected body.psys -> Payment system alias. Empty for default or taken from the available payment systems list. (max length 200)");
       }
       invoice = uuidv4();
-      ref$ = config.merchant_id, merchant_id = ref$.merchant_id, secret = ref$.secret;
-      hash = md5(body.amount + "" + body.currency + merchant_id + secret);
+      MERCHANT_ID = config.MERCHANT_ID, MERCHANT_SECRET = config.MERCHANT_SECRET;
+      hash = md5(body.amount + "" + body.currency + MERCHANT_ID + MERCHANT_SECRET);
       _cmd = 'payment';
       get_trans = 1;
       request = (import$({
         _cmd: _cmd,
         get_trans: get_trans,
-        merchant_id: merchant_id,
+        merchant_id: MERCHANT_ID,
         hash: hash,
         invoice: invoice
       }, body));
-      hash = md5;
-      return post(url, request).end(function(err, res){
+      return post(url).type('form').send(request).end(function(err, res){
+        console.log(url, (import$({
+          _cmd: _cmd,
+          get_trans: get_trans,
+          merchant_id: MERCHANT_ID,
+          hash: hash,
+          invoice: invoice
+        }, body)));
         if (err != null) {
-          return cb(err);
+          return cb(err.text);
         }
-        return cb(null, res);
+        if (res.text.indexOf('ERROR') > -1) {
+          return cb(err.text);
+        }
+        return cb(null, res.text);
       });
     };
   };
@@ -102,11 +111,11 @@
     });
   };
   module.exports = function(config, cb){
-    if (toString$.call(config.merchant_id).slice(8, -1) !== 'String') {
-      return cb("merchant_id is required");
+    if (toString$.call(config.MERCHANT_ID).slice(8, -1) !== 'String') {
+      return cb("MERCHANT_ID is required");
     }
-    if (toString$.call(config.secret).slice(8, -1) !== 'String') {
-      return cb("secret is required");
+    if (toString$.call(config.MERCHANT_SECRET).slice(8, -1) !== 'String') {
+      return cb("MERCHANT_SECRET is required");
     }
     return buildApi({
       name: 'test',

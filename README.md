@@ -24,9 +24,6 @@ const universepay = require('universepay');
 
 const config = { 
     MERCHANT_SECRET : ""
-    DOMAIN : ""
-    URL_RETURN : ""
-    URL_STATUS : ""
     MERCHANT_ID : ""
 }
 

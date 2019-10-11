@@ -42,10 +42,11 @@ build-make-request = ({ url, config })-> (body, cb)->
     _cmd = \payment
     get_trans = 1
     request = { _cmd, get_trans, merchant_id: MERCHANT_ID, hash, invoice, ...body }
-    hash = md5 
-    err, res <- post url, request .end
-    return cb err if err?
-    cb null, res
+    err, res <- post url .type 'form' .send request .end
+    console.log url, { _cmd, get_trans, merchant_id: MERCHANT_ID, hash, invoice, ...body }
+    return cb err.text if err?
+    return cb err.text if res.text.index-of('ERROR') > -1
+    cb null, res.text
 
 build-api = ({ name, config }, cb)->
     url = urls[name]
@@ -54,8 +55,8 @@ build-api = ({ name, config }, cb)->
     cb null, { make-request }
 
 module.exports = (config, cb)->
-    return cb "merchant_id is required" if typeof! config.merchant_id isnt \String
-    return cb "secret is required" if typeof! config.secret isnt \String
+    return cb "MERCHANT_ID is required" if typeof! config.MERCHANT_ID isnt \String
+    return cb "MERCHANT_SECRET is required" if typeof! config.MERCHANT_SECRET isnt \String
     err, test <- build-api { name: \test , config }
     return cb err if err?
     err, prod <- build-api { name: \prod , config }
